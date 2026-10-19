@@ -1,5 +1,2 @@
-.venv/
-beep.wav
-__pycache__/
-*.py[cod]
-.env
+echo .venv/> .gitignore
+echo *.wav>> .gitignore
