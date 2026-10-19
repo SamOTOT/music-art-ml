@@ -1,2 +1,5 @@
-echo .venv/> .gitignore
-echo *.wav>> .gitignore
+.venv/
+*.wav
+__pycache__/
+*.py[cod]
+.env
