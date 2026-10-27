@@ -1,3 +1,6 @@
+import numpy as np
+from scipy.io import wavfile
+
 NOTES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
 
 def note_to_freq(note):
@@ -7,14 +10,7 @@ def note_to_freq(note):
     n = (octave - 4) * 12 + (position - 9)  # semitones away from A4
     return 440 * (2 ** (n / 12))  # the frequency formula
 
-print(note_to_freq("A4"))   # should print 440.0
-print(note_to_freq("A5"))   # should print 880.0
-print(note_to_freq("C4"))   # should print about 261.63
-
 #frequency to sound
-
-import numpy as np
-from scipy.io import wavfile
 
 SAMPLE_RATE = 44100
 
