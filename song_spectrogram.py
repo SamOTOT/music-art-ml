@@ -20,5 +20,6 @@ def plot_spectrogram(path, out_png):
     plt.savefig(out_png, dpi=150)
     plt.show()
 
-plot_spectrogram("song.mp3", "spectrogram_song.png")
-plot_spectrogram("track.wav", "spectrogram_track.png")
+if __name__ == "__main__":
+    plot_spectrogram("song.mp3", "spectrogram_song.png")
+    plot_spectrogram("track.wav", "spectrogram_track.png")
