@@ -74,17 +74,18 @@ plt.title("Spectrogram: one bar")
 plt.colorbar(label="Loudness (dB)")
 plt.show()
 
-from scipy.signal import spectrogram
 
-f, t, S = spectrogram(bar, fs=SAMPLE_RATE, nperseg=1024)
-S_db = 10 * np.log10(S + 1e-10)          # convert to decibels
-keep = f < 5000                          # zoom in on 0–5000 Hz
+#from scipy.signal import spectrogram
 
-fig = plt.figure()
-ax = fig.add_subplot(projection="3d")
-T, F = np.meshgrid(t, f[keep])
-ax.plot_surface(T, F, S_db[keep], cmap="magma")
-ax.set_xlabel("Time (s)")
-ax.set_ylabel("Frequency (Hz)")
-ax.set_zlabel("Loudness (dB)")
-plt.show()
+#f, t, S = spectrogram(bar, fs=SAMPLE_RATE, nperseg=1024)
+#S_db = 10 * np.log10(S + 1e-10)          # convert to decibels
+#keep = f < 5000                          # zoom in on 0–5000 Hz
+
+#fig = plt.figure()
+#ax = fig.add_subplot(projection="3d")
+#T, F = np.meshgrid(t, f[keep])
+#ax.plot_surface(T, F, S_db[keep], cmap="magma")
+#ax.set_xlabel("Time (s)")
+#ax.set_ylabel("Frequency (Hz)")
+#ax.set_zlabel("Loudness (dB)")
+#plt.show()

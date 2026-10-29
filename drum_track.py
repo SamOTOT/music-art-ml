@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.io import wavfile
+from tone_generator import note_to_freq, make_tone   # borrow the tools
 
 SAMPLE_RATE = 44100
 
@@ -61,9 +62,9 @@ for name in song:
 
 track = np.concatenate(bars)         # join all bars into one long track
 
-from tone_generator import note_to_freq, make_tone   # borrow the tools
 
-beat_len = 60 / BPM          # one note per beat (0.5 s at 120 BPM)
+
+beat_len = 60 / BPM          # one note per beat 
 
 riff = ["C4","E4","G4","E4",  "A3","C4","E4","C4",
         "F3","A3","C4","A3",  "G3","B3","D4","B3"]   # 4 bars of tune
@@ -83,6 +84,3 @@ if peak > 0:                         # the safety check from #3
 show(track, "Full track")
 wavfile.write("track.wav", SAMPLE_RATE, (track * 32767 * 0.8).astype(np.int16))
 
-#git add .
-#git commit -m "Ticket 4: full drum track with fills"
-#git push
