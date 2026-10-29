@@ -3,7 +3,10 @@ from song_spectrogram import load_mono
 import pandas as pd
 import matplotlib.pyplot as plt
 
-data, rate = load_mono("song.mp3")
+
+SONG = "song2.mp3"
+
+data, rate = load_mono(SONG)
 seconds = len(data) // rate               # how many whole seconds
 
 loudness = []
@@ -27,7 +30,7 @@ df = pd.DataFrame({
 
 print(df.head(20))                          # first 20 rows
 
-df.to_csv("song_features.csv", index=False)  # save the table as a file
+df.to_csv(SONG + "_features.csv", index=False)  # save the table as a file
 
 df.plot(x="second", y="loudness", figsize=(12, 4), title="Loudness over time")
 plt.show()
