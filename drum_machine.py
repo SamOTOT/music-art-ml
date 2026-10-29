@@ -38,7 +38,7 @@ def make_hihat(duration=0.1):
     t = np.linspace(0, duration, int(SAMPLE_RATE * duration), endpoint=False)
 
     hihat = np.random.uniform(-1, 1, len(t))
-    envelope = np.exp(-90 * t)
+    envelope = np.exp(-50 * t)
 
     return hihat * envelope
 
@@ -60,8 +60,31 @@ def add_track(bar, sound, pattern, step_samples):
 
 add_track(bar, make_kick(), kick_pattern, step_samples)
 add_track(bar, make_snare(), snare_pattern, step_samples)
-add_track(bar, make_hihat() * 0.8 , hihat_pattern, step_samples)
+add_track(bar, make_hihat() * 1 , hihat_pattern, step_samples)
 
 bar = bar / np.max(np.abs(bar))                   # squash into -1..1 so it can't clip
 show(bar, "One bar")
 wavfile.write("beat.wav", SAMPLE_RATE, (bar * 32767 * 0.8).astype(np.int16))
+
+plt.specgram(bar, Fs=SAMPLE_RATE, NFFT=1024, noverlap=512, cmap="magma")
+plt.ylim(0, 10000)
+plt.xlabel("Time (s)")
+plt.ylabel("Frequency (Hz)")
+plt.title("Spectrogram: one bar")
+plt.colorbar(label="Loudness (dB)")
+plt.show()
+
+from scipy.signal import spectrogram
+
+f, t, S = spectrogram(bar, fs=SAMPLE_RATE, nperseg=1024)
+S_db = 10 * np.log10(S + 1e-10)          # convert to decibels
+keep = f < 5000                          # zoom in on 0–5000 Hz
+
+fig = plt.figure()
+ax = fig.add_subplot(projection="3d")
+T, F = np.meshgrid(t, f[keep])
+ax.plot_surface(T, F, S_db[keep], cmap="magma")
+ax.set_xlabel("Time (s)")
+ax.set_ylabel("Frequency (Hz)")
+ax.set_zlabel("Loudness (dB)")
+plt.show()
