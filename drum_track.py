@@ -50,6 +50,10 @@ kick_pattern  = [1,0,0,0, 0,0,0,0, 1,0,1,0, 0,0,0,0]
 snare_pattern = [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0]
 hihat_pattern = [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0]
 
+fill_kick  = [1,0,0,0, 0,0,0,0, 1,0,1,0, 0,0,0,0]
+fill_snare = [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,1,1,1]
+fill_hihat = [1,1,1,1, 1,1,1,1, 1,1,1,1, 0,0,0,0]
+
 BPM = 90
 song = ["A", "A", "A", "B"] * 4      # the plan above, 16 bars
 
@@ -58,7 +62,7 @@ for name in song:
     if name == "A":
         bars.append(make_bar(kick_pattern, snare_pattern, hihat_pattern, BPM))
     else:
-        bars.append(make_bar(kick_pattern, snare_pattern, hihat_pattern, BPM))  # build a B bar
+        bars.append(make_bar(fill_kick, fill_snare, fill_hihat, BPM))  # build a B bar
 
 track = np.concatenate(bars)         # join all bars into one long track
 
