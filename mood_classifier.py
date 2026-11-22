@@ -6,7 +6,7 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import accuracy_score
 from mood_dataset import clip_features
 
-FEATURES = ["loudness", "loudness_change", "brightness"]
+FEATURES = ["loudness", "loudness_change", "loudness_peak", "brightness"]
 
 class MoodGuesser:
     def __init__(self, k=3):

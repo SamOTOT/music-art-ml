@@ -3,17 +3,16 @@ import pandas as pd
 from song_spectrogram import load_mono
 from song_features import measure_seconds
 
-CLIP_SECONDS = 15
 
-def clip_features(path):                     # measure ANY mp3, the same way every time
+
+def clip_features(path):                       # now measures the WHOLE song
     data, rate = load_mono(path)
-    middle = len(data) // 2
-    half = CLIP_SECONDS * rate // 2
-    clip = data[middle - half : middle + half]
-    per_second = measure_seconds(clip, rate)
+    per_second = measure_seconds(data, rate)
+    per_second = per_second.iloc[5:-5]         # skip the first and last 5 seconds
     return {
         "loudness": per_second["loudness"].mean(),
         "loudness_change": per_second["loudness"].std(),
+        "loudness_peak": per_second["loudness"].quantile(0.9),   # NEW: how loud the loudest moments get
         "pitch": per_second["pitch_hz"].mean(),
         "brightness": per_second["brightness"].mean(),
     }
