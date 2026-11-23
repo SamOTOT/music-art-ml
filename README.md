@@ -132,3 +132,4 @@ Python · NumPy · SciPy · pandas · Matplotlib · soundfile · librosa · scik
 ## Author
 
 Snehal Tirkey, B.Tech Computer Science & Engineering.
+Built step by step with Claude (Anthropic) as a tutor: it planned the tickets, explained concepts and reviewed code, while I wrote, ran and debugged each project and ran the experiments.
