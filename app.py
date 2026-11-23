@@ -8,6 +8,8 @@ from drum_track import make_bar
 import soundfile as sf
 from song_features import measure_seconds
 from song_painting import make_painting
+from photo_palette import get_palette
+from photo_melody import palette_to_melody
 
 def to_wav(wave, rate=SAMPLE_RATE):
     """Turn a wave (numbers) into .wav bytes the app can play."""
@@ -54,12 +56,18 @@ def song_table(file_bytes):
     data, rate, _ = load_song(file_bytes)
     return measure_seconds(data, rate)
 
+@st.cache_data
+def photo_palette(file_bytes):
+    """Run k-means on the uploaded photo once."""
+    return get_palette(io.BytesIO(file_bytes))
+
 st.set_page_config(page_title="Music × Art × ML", layout="wide")
 st.title("Music × Art × ML")
 st.caption("Sound, pictures and machine learning, all made from numbers.")
 
 st.sidebar.header("Your files")
 song_file = st.sidebar.file_uploader("Song (MP3 or WAV)", type=["mp3", "wav"])
+photo_file = st.sidebar.file_uploader("Photo (JPG or PNG)", type=["jpg", "jpeg", "png"])
 
 tabs = st.tabs(["Tone generator", "Drum machine", "Song visualizer",
                 "Painting", "Photo melody", "Mood guesser"])
@@ -149,7 +157,32 @@ with tabs[3]:
         st.download_button("Download painting (PNG)", buffer.getvalue(),
                            file_name="painting.png", mime="image/png")
 
+# ---------- Tab 5: photo melody ----------
+with tabs[4]:
+    st.header("Photo melody")
+    if photo_file is None:
+        st.info("Upload a photo in the sidebar to hear it.")
+    else:
+        palette, share = photo_palette(photo_file.getvalue())
+        notes, tune = palette_to_melody(palette, share)
+
+        left, right = st.columns([1, 2])
+        left.image(photo_file, caption="Your photo")
+        with right:
+            st.write("Its 5 main colours (k-means) and the note each one becomes:")
+            for colour, part, note in zip(palette, share, notes):
+                hex_code = "#{:02x}{:02x}{:02x}".format(*colour)
+                st.markdown(
+                    f"<div style='display:flex;align-items:center;gap:12px;margin:6px 0'>"
+                    f"<div style='width:56px;height:32px;border-radius:6px;background:{hex_code}'></div>"
+                    f"<b>{note}</b> &nbsp;·&nbsp; {part * 100:.0f}% of the photo</div>",
+                    unsafe_allow_html=True)
+
+        repeats = st.slider("Play it how many times", 1, 5, 3)
+        st.audio(to_wav(np.concatenate([tune] * repeats)), format="audio/wav")
+        st.caption("Darker colour = lower note. Bigger share of the photo = longer note.")
+
 # ---------- Tabs still to build ----------
-for i, ticket in [(4, "18.5"), (5, "18.6")]:
+for i, ticket in [(5, "18.6")]:
     with tabs[i]:
         st.info(f"Coming in ticket {ticket}.")

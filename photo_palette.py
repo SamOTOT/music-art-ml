@@ -1,9 +1,10 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.cluster import KMeans
+from PIL import Image
 
 def get_palette(path, k=5):
-    img = plt.imread(path)
+    img = np.array(Image.open(path).convert("RGB"))
     pixels = img.reshape(-1, 3)
     km = KMeans(n_clusters=k, n_init=10, random_state=0)
     km.fit(pixels)
