@@ -46,6 +46,11 @@ def make_bar(kick_p, snare_p, hihat_p, bpm):         # NEW: the bar machine
     add_track(bar, make_hihat(), hihat_p, step_samples)
     return bar
 
+if __name__ == "__main__":
+    show(make_kick(), "Kick")
+    show(make_snare(), "Snare")
+    show(make_hihat(), "Hi-hat")
+
 kick_pattern  = [1,0,0,0, 0,0,0,0, 1,0,1,0, 0,0,0,0]
 snare_pattern = [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0]
 hihat_pattern = [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0]
