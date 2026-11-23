@@ -6,6 +6,8 @@ from scipy.io import wavfile
 from tone_generator import note_to_freq, make_tone, SAMPLE_RATE
 from drum_track import make_bar
 import soundfile as sf
+from song_features import measure_seconds
+from song_painting import make_painting
 
 def to_wav(wave, rate=SAMPLE_RATE):
     """Turn a wave (numbers) into .wav bytes the app can play."""
@@ -45,6 +47,12 @@ def plot_spec(data, rate, title):
     ax.set_ylabel("Frequency (Hz)")
     fig.colorbar(image, ax=ax, label="Loudness (dB)")
     return fig
+
+@st.cache_data
+def song_table(file_bytes):
+    """Measure the uploaded song second by second (the #7 table), once."""
+    data, rate, _ = load_song(file_bytes)
+    return measure_seconds(data, rate)
 
 st.set_page_config(page_title="Music × Art × ML", layout="wide")
 st.title("Music × Art × ML")
@@ -124,7 +132,24 @@ with tabs[2]:
         st.pyplot(plot_wave(data[::step], rate / step, "Waveform"))
         st.pyplot(plot_spec(data, rate, "Spectrogram"))
 
+# ---------- Tab 4: painting ----------
+with tabs[3]:
+    st.header("Painting")
+    if song_file is None:
+        st.info("Upload a song in the sidebar to paint it.")
+    else:
+        table = song_table(song_file.getvalue())
+        cols = st.slider("Circles per row", 8, 32, 16)
+        fig = make_painting(table, cols)
+        st.pyplot(fig)
+        st.caption("One circle per second. Size = loudness, colour = pitch (dark purple = low, yellow = high).")
+
+        buffer = io.BytesIO()
+        fig.savefig(buffer, format="png", dpi=150, facecolor="black", bbox_inches="tight")
+        st.download_button("Download painting (PNG)", buffer.getvalue(),
+                           file_name="painting.png", mime="image/png")
+
 # ---------- Tabs still to build ----------
-for i, ticket in [(3, "18.4"), (4, "18.5"), (5, "18.6")]:
+for i, ticket in [(4, "18.5"), (5, "18.6")]:
     with tabs[i]:
         st.info(f"Coming in ticket {ticket}.")
