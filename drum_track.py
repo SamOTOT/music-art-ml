@@ -51,45 +51,45 @@ if __name__ == "__main__":
     show(make_snare(), "Snare")
     show(make_hihat(), "Hi-hat")
 
-kick_pattern  = [1,0,0,0, 0,0,0,0, 1,0,1,0, 0,0,0,0]
-snare_pattern = [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0]
-hihat_pattern = [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0]
+    kick_pattern  = [1,0,0,0, 0,0,0,0, 1,0,1,0, 0,0,0,0]
+    snare_pattern = [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0]
+    hihat_pattern = [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0]
 
-fill_kick  = [1,0,0,0, 0,0,0,0, 1,0,1,0, 0,0,0,0]
-fill_snare = [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,1,1,1]
-fill_hihat = [1,1,1,1, 1,1,1,1, 1,1,1,1, 0,0,0,0]
+    fill_kick  = [1,0,0,0, 0,0,0,0, 1,0,1,0, 0,0,0,0]
+    fill_snare = [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,1,1,1]
+    fill_hihat = [1,1,1,1, 1,1,1,1, 1,1,1,1, 0,0,0,0]
 
-BPM = 90
-song = ["A", "A", "A", "B"] * 4      # the plan above, 16 bars
+    BPM = 90
+    song = ["A", "A", "A", "B"] * 4      # the plan above, 16 bars
 
-bars = []
-for name in song:
-    if name == "A":
-        bars.append(make_bar(kick_pattern, snare_pattern, hihat_pattern, BPM))
-    else:
-        bars.append(make_bar(fill_kick, fill_snare, fill_hihat, BPM))  # build a B bar
+    bars = []
+    for name in song:
+        if name == "A":
+            bars.append(make_bar(kick_pattern, snare_pattern, hihat_pattern, BPM))
+        else:
+            bars.append(make_bar(fill_kick, fill_snare, fill_hihat, BPM))  # build a B bar
 
-track = np.concatenate(bars)         # join all bars into one long track
+    track = np.concatenate(bars)         # join all bars into one long track
 
 
 
-beat_len = 60 / BPM          # one note per beat 
+    beat_len = 60 / BPM          # one note per beat 
 
-riff = ["C4","E4","G4","E4",  "A3","C4","E4","C4",
+    riff = ["C4","E4","G4","E4",  "A3","C4","E4","C4",
         "F3","A3","C4","A3",  "G3","B3","D4","B3"]   # 4 bars of tune
 
-tune_notes = []
-for note in riff * 4:        # repeat it 4 times → 16 bars, same as the drums
-    tune_notes.append(make_tone(note_to_freq(note), beat_len))
-tune = np.concatenate(tune_notes)
+    tune_notes = []
+    for note in riff * 4:        # repeat it 4 times → 16 bars, same as the drums
+        tune_notes.append(make_tone(note_to_freq(note), beat_len))
+    tune = np.concatenate(tune_notes)
 
-tune = tune[:len(track)]     # cut to the exact length of the drums
-track = track + tune * 0.6   # add the tune on top, a bit quieter
+    tune = tune[:len(track)]     # cut to the exact length of the drums
+    track = track + tune * 0.6   # add the tune on top, a bit quieter
 
-peak = np.max(np.abs(track))
-if peak > 0:                         # the safety check from #3
-    track = track / peak
+    peak = np.max(np.abs(track))
+    if peak > 0:                         # the safety check from #3
+        track = track / peak
 
-show(track, "Full track")
-wavfile.write("track.wav", SAMPLE_RATE, (track * 32767 * 0.8).astype(np.int16))
+    show(track, "Full track")
+    wavfile.write("track.wav", SAMPLE_RATE, (track * 32767 * 0.8).astype(np.int16))
 
