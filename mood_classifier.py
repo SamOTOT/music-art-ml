@@ -1,63 +1,67 @@
 import numpy as np
 import pandas as pd
-from sklearn.model_selection import train_test_split, StratifiedKFold
+from sklearn.model_selection import StratifiedKFold
 from sklearn.preprocessing import StandardScaler
 from sklearn.neighbors import KNeighborsClassifier
+from sklearn.tree import DecisionTreeClassifier
 from sklearn.metrics import accuracy_score
+from song_features import BANDS
 from mood_dataset import clip_features
 
-from song_features import BANDS
-
-FEATURES = ["loudness", "loudness_change", "loudness_peak", "brightness"]
+FEATURES_4 = ["loudness", "loudness_change", "loudness_peak", "brightness"]
+FEATURES_14 = list(FEATURES_4)
 for band in BANDS:
-    FEATURES += [band, band + "_change"]
+    FEATURES_14 += [band, band + "_change"]
 
 class MoodGuesser:
-    def __init__(self, k=3):
+    def __init__(self, model):                  # now you choose which model goes inside
         self.scaler = StandardScaler()
-        self.model = KNeighborsClassifier(n_neighbors=k)
+        self.model = model
 
     def train(self, X, y):
-        X_scaled = self.scaler.fit_transform(X)
-        self.model.fit(X_scaled, y)
+        self.model.fit(self.scaler.fit_transform(X), y)
 
     def predict(self, X):
-        X_scaled = self.scaler.transform(X)
-        return self.model.predict(X_scaled)
+        return self.model.predict(self.scaler.transform(X))
 
 df = pd.read_csv("mood_dataset.csv")
-X = df[FEATURES]
 y = df["label"]
 
-# ---------- Exp 0: one test of 5 hidden songs ----------
-X_train, X_test, y_train, y_test, songs_train, songs_test = train_test_split(
-    X, y, df["song"], test_size=0.25, stratify=y, random_state=0)
-guesser = MoodGuesser(k=3)
-guesser.train(X_train, y_train)
-guesses = guesser.predict(X_test)
-print("Exp 0 single test accuracy:", accuracy_score(y_test, guesses))
+def cv_score(make_model, features):             # the Exp 1 scoreboard, as a reusable function
+    folds = StratifiedKFold(n_splits=5, shuffle=True, random_state=0)
+    scores = []
+    for train_idx, test_idx in folds.split(df, y):
+        g = MoodGuesser(make_model())            # a fresh model every round
+        g.train(df[features].iloc[train_idx], y.iloc[train_idx])
+        guesses = g.predict(df[features].iloc[test_idx])
+        scores.append(accuracy_score(y.iloc[test_idx], guesses))
+    return np.mean(scores)
 
-# ---------- Exp 1: cross-validation ----------
-folds = StratifiedKFold(n_splits=5, shuffle=True, random_state=0)
-scores = []
-wrong = []
-for train_idx, test_idx in folds.split(X, y):
-    g = MoodGuesser(k=3)
-    g.train(X.iloc[train_idx], y.iloc[train_idx])
-    guesses = g.predict(X.iloc[test_idx])
-    real = y.iloc[test_idx].values
-    scores.append(accuracy_score(real, guesses))
-    for song, r, gs in zip(df["song"].iloc[test_idx], real, guesses):
-        if r != gs:
-            wrong.append(song)
+# ---------- Exp 4: compare models ----------
+models = {
+    "KNN k=3":       lambda: KNeighborsClassifier(n_neighbors=3),
+    "KNN k=5":       lambda: KNeighborsClassifier(n_neighbors=5),
+    "KNN k=7":       lambda: KNeighborsClassifier(n_neighbors=7),
+    "Decision tree": lambda: DecisionTreeClassifier(max_depth=3, random_state=0),
+}
 
-print("Scores per round:", np.round(scores, 2))
-print("Cross-validation accuracy:", round(np.mean(scores), 2))
-print("Songs it got wrong:", wrong)
+results = []
+for name, make in models.items():
+    results.append({
+        "model": name,
+        "4 features": cv_score(make, FEATURES_4),
+        "14 features": cv_score(make, FEATURES_14),
+    })
+print(pd.DataFrame(results).round(2))
 
-# ---------- Final model: guess a new song ----------
-final = MoodGuesser(k=3)
-final.train(X, y)
-NEW_SONG = "new_song.mp3"
-new = pd.DataFrame([clip_features(NEW_SONG)])[FEATURES]
-print(NEW_SONG, "->", final.predict(new)[0])
+# ---------- Which features does the tree use? ----------
+tree = DecisionTreeClassifier(max_depth=3, random_state=0)
+tree.fit(df[FEATURES_14], y)
+importance = pd.Series(tree.feature_importances_, index=FEATURES_14)
+print(importance.sort_values(ascending=False).round(2).head(6))
+
+# ---------- Final model: guess the new song ----------
+final = MoodGuesser(KNeighborsClassifier(n_neighbors=3))
+final.train(df[FEATURES_4], y)
+new = pd.DataFrame([clip_features("new_song.mp3")])[FEATURES_4]
+print("new_song.mp3 ->", final.predict(new)[0])
