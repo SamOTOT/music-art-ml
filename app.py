@@ -13,6 +13,8 @@ from photo_melody import palette_to_melody
 import pandas as pd
 from mood_classifier import train_final, FEATURES_4
 from mood_dataset import clip_features
+import librosa
+import librosa.display
 
 def to_wav(wave, rate=SAMPLE_RATE):
     """Turn a wave (numbers) into .wav bytes the app can play."""
@@ -41,6 +43,24 @@ def load_song(file_bytes):
     if data.ndim == 2:
         data = data.mean(axis=1)
     return data, rate, channels
+
+@st.cache_data
+def mel_db_of(file_bytes):
+    """Mel spectrogram of the uploaded song in decibels, computed once."""
+    data, rate, _ = load_song(file_bytes)
+    mel = librosa.feature.melspectrogram(y=data.astype(np.float32), sr=rate, n_mels=128, fmax=8000)
+    return librosa.power_to_db(mel, ref=np.max), rate
+
+def plot_mel(mel_db, rate, title):
+    """Draw a mel spectrogram and return the figure."""
+    fig, ax = plt.subplots(figsize=(10, 4))
+    image = librosa.display.specshow(mel_db, sr=rate, x_axis="time", y_axis="mel",
+                                     fmax=8000, cmap="magma", ax=ax)
+    ax.set_title(title)
+    ax.set_xlabel("Time (s)")
+    ax.set_ylabel("Frequency (Hz, mel scale)")
+    fig.colorbar(image, ax=ax, format="%+2.0f dB", label="Loudness (dB below the loudest moment)")
+    return fig
 
 def plot_spec(data, rate, title):
     """Draw a spectrogram and return the figure."""
@@ -151,7 +171,11 @@ with tabs[2]:
 
         step = max(1, len(data) // 200_000)          # draw at most ~200,000 points
         st.pyplot(plot_wave(data[::step], rate / step, "Waveform"))
-        st.pyplot(plot_spec(data, rate, "Spectrogram"))
+        
+        mel_db, mel_rate = mel_db_of(song_file.getvalue())
+        st.pyplot(plot_mel(mel_db, mel_rate, "Mel spectrogram"))
+        st.caption("Same song, with the pitch axis redrawn the way ears hear it: low notes get more room, "
+                   "high notes are squeezed together. This is the kind of picture audio AI models learn from.")
 
 # ---------- Tab 4: painting ----------
 with tabs[3]:
