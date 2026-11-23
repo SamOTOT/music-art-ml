@@ -10,6 +10,9 @@ from song_features import measure_seconds
 from song_painting import make_painting
 from photo_palette import get_palette
 from photo_melody import palette_to_melody
+import pandas as pd
+from mood_classifier import train_final, FEATURES_4
+from mood_dataset import clip_features
 
 def to_wav(wave, rate=SAMPLE_RATE):
     """Turn a wave (numbers) into .wav bytes the app can play."""
@@ -60,6 +63,16 @@ def song_table(file_bytes):
 def photo_palette(file_bytes):
     """Run k-means on the uploaded photo once."""
     return get_palette(io.BytesIO(file_bytes))
+
+@st.cache_resource
+def mood_model():
+    """Train the final mood model once, when the app starts."""
+    return train_final()
+
+@st.cache_data
+def song_mood_features(file_bytes):
+    """Measure the uploaded song the same way as the 20 training songs."""
+    return clip_features(io.BytesIO(file_bytes))
 
 st.set_page_config(page_title="Music × Art × ML", layout="wide")
 st.title("Music × Art × ML")
@@ -182,7 +195,28 @@ with tabs[4]:
         st.audio(to_wav(np.concatenate([tune] * repeats)), format="audio/wav")
         st.caption("Darker colour = lower note. Bigger share of the photo = longer note.")
 
-# ---------- Tabs still to build ----------
-for i, ticket in [(5, "18.6")]:
-    with tabs[i]:
-        st.info(f"Coming in ticket {ticket}.")
+# ---------- Tab 6: mood guesser ----------
+with tabs[5]:
+    st.header("Mood guesser")
+    if song_file is None:
+        st.info("Upload a song in the sidebar and the model will guess its mood.")
+    else:
+        model, data = mood_model()
+        features = song_mood_features(song_file.getvalue())
+        row = pd.DataFrame([features])[FEATURES_4]
+        guess = model.predict(row)[0]
+
+        st.metric("The model thinks this song is", guess.upper())
+
+        st.subheader("How it decided")
+        st.write("Its 3 most similar songs from the training set. They voted:")
+        _, idx = model.model.kneighbors(model.scaler.transform(row))
+        st.table(data.iloc[idx[0]][["song", "label"]])
+
+        st.write("This song's numbers next to the calm and energetic averages:")
+        compare = data.groupby("label")[FEATURES_4].mean().T
+        compare["this song"] = row.iloc[0]
+        st.dataframe(compare.round(3))
+
+        st.caption("Model: KNN (k = 3) on 4 whole-song features. 85% accuracy in cross-validation "
+                   "on 20 labelled songs. It can't hear rhythm, so some songs fool it.")
