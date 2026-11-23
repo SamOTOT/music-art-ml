@@ -5,6 +5,7 @@ import streamlit as st
 from scipy.io import wavfile
 from tone_generator import note_to_freq, make_tone, SAMPLE_RATE
 from drum_track import make_bar
+import soundfile as sf
 
 def to_wav(wave, rate=SAMPLE_RATE):
     """Turn a wave (numbers) into .wav bytes the app can play."""
@@ -25,9 +26,32 @@ def plot_wave(wave, rate, title):
     ax.set_ylabel("Amplitude")
     return fig
 
+@st.cache_data
+def load_song(file_bytes):
+    """Open an uploaded song once, and remember it between reruns."""
+    data, rate = sf.read(io.BytesIO(file_bytes))
+    channels = 1 if data.ndim == 1 else data.shape[1]
+    if data.ndim == 2:
+        data = data.mean(axis=1)
+    return data, rate, channels
+
+def plot_spec(data, rate, title):
+    """Draw a spectrogram and return the figure."""
+    fig, ax = plt.subplots(figsize=(10, 4))
+    _, _, _, image = ax.specgram(data, Fs=rate, NFFT=2048, noverlap=1024, cmap="magma", vmin=-130)
+    ax.set_ylim(0, 8000)
+    ax.set_title(title)
+    ax.set_xlabel("Time (s)")
+    ax.set_ylabel("Frequency (Hz)")
+    fig.colorbar(image, ax=ax, label="Loudness (dB)")
+    return fig
+
 st.set_page_config(page_title="Music × Art × ML", layout="wide")
 st.title("Music × Art × ML")
 st.caption("Sound, pictures and machine learning, all made from numbers.")
+
+st.sidebar.header("Your files")
+song_file = st.sidebar.file_uploader("Song (MP3 or WAV)", type=["mp3", "wav"])
 
 tabs = st.tabs(["Tone generator", "Drum machine", "Song visualizer",
                 "Painting", "Photo melody", "Mood guesser"])
@@ -50,7 +74,7 @@ with tabs[0]:
             st.audio(to_wav(melody), format="audio/wav")
             st.pyplot(plot_wave(melody, SAMPLE_RATE, "Your melody"))
 
-# ---------- Tabs still to build ----------
+
 # ---------- Tab 2: drum machine ----------
 with tabs[1]:
     st.header("Drum machine")
@@ -80,7 +104,27 @@ with tabs[1]:
         st.audio(to_wav(beat), format="audio/wav")
         st.pyplot(plot_wave(beat, SAMPLE_RATE, f"Your beat: {repeats} bar(s) at {bpm} BPM"))
 
+
+# ---------- Tab 3: song visualizer ----------
+with tabs[2]:
+    st.header("Song visualizer")
+    if song_file is None:
+        st.info("Upload a song in the sidebar to see it here.")
+    else:
+        data, rate, channels = load_song(song_file.getvalue())
+        st.audio(song_file)
+
+        seconds = len(data) / rate
+        c1, c2, c3 = st.columns(3)
+        c1.metric("Length", f"{int(seconds // 60)} min {int(seconds % 60)} s")
+        c2.metric("Sample rate", f"{rate:,} Hz")
+        c3.metric("Channels", "stereo" if channels == 2 else "mono")
+
+        step = max(1, len(data) // 200_000)          # draw at most ~200,000 points
+        st.pyplot(plot_wave(data[::step], rate / step, "Waveform"))
+        st.pyplot(plot_spec(data, rate, "Spectrogram"))
+
 # ---------- Tabs still to build ----------
-for i, ticket in [(2, "18.3"), (3, "18.4"), (4, "18.5"), (5, "18.6")]:
+for i, ticket in [(3, "18.4"), (4, "18.5"), (5, "18.6")]:
     with tabs[i]:
         st.info(f"Coming in ticket {ticket}.")
